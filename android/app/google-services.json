@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "660911174917",
+    "project_id": "login-baa9a",
+    "storage_bucket": "login-baa9a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:660911174917:android:c075a29aca56fbdd2b336c",
+        "android_client_info": {
+          "package_name": "com.idrcorner.signingoogle"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDetjl6WijD8diZIEtBhMCZvGm0NEJf18s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
