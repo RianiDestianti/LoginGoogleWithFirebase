@@ -112,21 +112,9 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:firebase_core/firebase_core.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+ 
   
-  // Initialize Firebase with Web configuration
-  // In main.dart, update the Firebase initialization
-await Firebase.initializeApp(
-  options: const FirebaseOptions(
-    apiKey: 'ACTUAL_API_KEY',
-    authDomain: 'YOUR_PROJECT.firebaseapp.com',
-    projectId: 'YOUR_PROJECT',
-    storageBucket: 'YOUR_PROJECT.appspot.com',
-    messagingSenderId: 'ACTUAL_SENDER_ID',
-    appId: 'ACTUAL_APP_ID',
-  ),
-);
-  
+
   runApp(const MyApp());
 }
 
@@ -136,86 +124,50 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: LoginPage(),
       debugShowCheckedModeBanner: false,
+      home: const LoginPage(),
     );
   }
 }
 
 class LoginPage extends StatefulWidget {
+  const LoginPage({super.key});
+
   @override
   _LoginPageState createState() => _LoginPageState();
 }
 
 class _LoginPageState extends State<LoginPage> {
   bool _isLoading = false;
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
 
-  final GoogleSignIn googleSignIn = GoogleSignIn(
-  clientId: 'ACTUAL_WEB_CLIENT_ID.apps.googleusercontent.com',
-);
+  Future<void> signInWithGoogle() async {
+  GoogleSignIn googleSignIn = GoogleSignIn(
+    clientId:
+        "660911174917-e2nb88a3u4g892np7os5eat89nd0ci10.apps.googleusercontent.com",
+  );
 
-  Future<void> _signInWithGoogle() async {
-    setState(() {
-      _isLoading = true;
-    });
+  GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+  GoogleSignInAuthentication googleAuth = await googleUser!.authentication;
 
-    try {
-      print('Starting Google Sign In...');
-      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+  AuthCredential credential = GoogleAuthProvider.credential(
+    accessToken: googleAuth.accessToken,
+    idToken: googleAuth.idToken,
+  );
 
-      if (googleUser == null) {
-        print('Google Sign In Cancelled');
-        return;
-      }
-
-      print('Getting Google Auth Details...');
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-
-      print('Creating Firebase Credential...');
-      final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-
-      print('Signing in to Firebase...');
-      final UserCredential userCredential = 
-          await FirebaseAuth.instance.signInWithCredential(credential);
-      
-      print('Successfully signed in: ${userCredential.user?.displayName}');
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Login berhasil: ${userCredential.user?.displayName}')),
-        );
-      }
-    } catch (e) {
-      print('Error during sign in: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-  }
+  await FirebaseAuth.instance.signInWithCredential(credential);
+}
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Google Sign In'),
-      ),
+      appBar: AppBar(title: const Text('Google Sign In')),
       body: Center(
         child: _isLoading
-            ? CircularProgressIndicator()
+            ? const CircularProgressIndicator()
             : ElevatedButton(
-                onPressed: _signInWithGoogle,
-                child: Text('Sign in with Google'),
+                onPressed: signInWithGoogle,
+                child: const Text('Sign in with Google'),
               ),
       ),
     );
