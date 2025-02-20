@@ -111,10 +111,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:firebase_core/firebase_core.dart';
 
-void main() async {
- 
-  
 
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  // await Firebase.initializeApp();
   runApp(const MyApp());
 }
 
@@ -131,32 +132,134 @@ class MyApp extends StatelessWidget {
 }
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+  const LoginPage({super.key}); 
 
   @override
-  _LoginPageState createState() => _LoginPageState();
+  LoginPageState createState() => LoginPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class LoginPageState extends State<LoginPage> {
   bool _isLoading = false;
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
+  String nama = "";
+  String gambar = "";
 
   Future<void> signInWithGoogle() async {
-  GoogleSignIn googleSignIn = GoogleSignIn(
-    clientId:
-        "660911174917-e2nb88a3u4g892np7os5eat89nd0ci10.apps.googleusercontent.com",
-  );
+    setState(() {
+      _isLoading = true;
+    });
 
-  GoogleSignInAccount? googleUser = await googleSignIn.signIn();
-  GoogleSignInAuthentication googleAuth = await googleUser!.authentication;
+    try {
+      GoogleSignIn googleSignIn = GoogleSignIn();
 
-  AuthCredential credential = GoogleAuthProvider.credential(
-    accessToken: googleAuth.accessToken,
-    idToken: googleAuth.idToken,
-  );
+          // Hapus cache login sebelumnya sebelum sign in ulang
+    await googleSignIn.signOut();
+    await googleSignIn.disconnect();
 
-  await FirebaseAuth.instance.signInWithCredential(credential);
-}
+
+
+
+      GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+      if (googleUser == null) {
+        setState(() {
+          _isLoading = false;
+        });
+        return;
+      }
+
+
+
+      GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+
+      AuthCredential credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      UserCredential userCredential =
+          await FirebaseAuth.instance.signInWithCredential(credential);
+      User? user = userCredential.user;
+
+      if (user != null) {
+        setState(() {
+          nama = user.displayName ?? "Pengguna";
+          gambar = user.photoURL ?? "";
+        });
+
+        // Menampilkan SnackBar setelah login berhasil
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Login berhasil: ${user.displayName}'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+
+        _showLoginSuccessDialog(user);
+      }
+    } catch (e) {
+      print("Error during sign-in: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    }
+
+    setState(() {
+      _isLoading = false;
+    });
+  }
+
+  void _showLoginSuccessDialog(User user) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+          contentPadding: const EdgeInsets.all(20),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                "Sudah Login",
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blue, // Warna judul biru
+                ),
+              ),
+              const SizedBox(height: 10),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(50),
+                child: user.photoURL != null
+                    ? Image.network(user.photoURL!, width: 80, height: 80, fit: BoxFit.cover)
+                    : const Icon(Icons.account_circle, size: 80, color: Colors.grey),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                "Anda Login sebagai ${user.displayName}",
+                style: const TextStyle(fontSize: 16),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text("OK"),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
